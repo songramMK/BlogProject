@@ -24,4 +24,15 @@ const sendOtpEmail = async(to, otp) =>{
       });
 }
 
-module.exports = {sendOtpEmail}
+const SendGeneratePassword = async(to , password)=>{
+  await transporter.sendMail({
+    from: process.env.EMAIL,
+    to,
+    subject:
+      "PASSWORD GENERATE WHEN YOU AUTHENTICATE BY USING GOOGLE , FACEBOOK , GITHUB",
+    text: "Hello User ? ",
+    html: `<b>Hello ${to} </b> , This Is Your New Password <b>${password} .</b>`, // HTML version of the message
+  });
+}
+
+module.exports = { sendOtpEmail, SendGeneratePassword };

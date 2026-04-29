@@ -16,10 +16,14 @@ import {
   useAnimate,
   motion,
   AnimatePresence,
-} from "framer-motion";
+} from "framer-motion"; 
+
+
 import { signInFailure , signInStart, signInSuccess } from "../../redux/feature/user/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "flowbite-react";
+import { FacebookAuthProvider, getAuth, GithubAuthProvider, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { app } from "../../firebase";
 
 export const SignIn = () => {
   const [open, setOpen] = useState(false);
@@ -31,13 +35,9 @@ export const SignIn = () => {
        setNotifications((pv) => pv.filter((n) => n.id !== id));
     };
 
-
-  // errorMessage
-
-
   const navigate = useNavigate();
-  
   const Dispatch = useDispatch() ; 
+
   
   const { loading, error: errorMessage } = useSelector((state) => state.user); 
   
@@ -47,12 +47,103 @@ export const SignIn = () => {
     console.log('FormData: ' , FormData);
     setFormData(FormData);
   };
+
+  const auth = getAuth(app); 
+
+  const HandleFacebook = async () => {
+    try {
+      const FacbookProvider = new FacebookAuthProvider();
+      const firebaseFacebookResponse = await signInWithPopup(
+        auth,
+        FacbookProvider,
+      );
+
+      console.log("UserName : ", firebaseFacebookResponse.user.displayName , 
+        "email : ", firebaseFacebookResponse.user.email , 
+        "profilePhotoUrl:", firebaseFacebookResponse.user.photoURL,
+
+
+      );
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: firebaseFacebookResponse.user.displayName,
+          email: firebaseFacebookResponse.user.email,
+          profilePhotoUrl: firebaseFacebookResponse.user.photoURL,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Dispatch(signInSuccess(data));
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    /* 
+email : user.email
+userName : user.displayName
+profileUrl : user.photoURL
+
+
+    */
+    // console.log("Facebook : ", firebaseFacebookResponse);
+    console.log("FACEBOOK ");
+  };
+
+  const HandleGithub = async () => {
+    try {
+      const gitHubProvider = new GithubAuthProvider();
+      const firebaseGithubResponse = await signInWithPopup(
+        auth,
+        gitHubProvider,
+      );
+      
+      navigate("/GithubProfile", {
+        state: {
+          UserName: firebaseGithubResponse.user.reloadUserInfo.screenName,
+          profilePhotoUrl: firebaseGithubResponse.user.photoURL,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const HandleGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+    try {
+      const firebaseResponse = await signInWithPopup(auth, provider);
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: firebaseResponse.user.displayName,
+          email: firebaseResponse.user.email,
+          profilePhotoUrl: firebaseResponse.user.photoURL,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Dispatch(signInSuccess(data));
+        navigate("/");
+      }
+      console.log(firebaseResponse);
+    } catch (error) {
+      console.log(error);
+    }
+    console.log("GOOGLE");
+  };
+
   const handleSubmit = async (e) => {
 
    try{
 
      e.preventDefault();
-     Dispatch(signInStart());
+     Dispatch(signInStart()); // signIn start Action কে বলে দেওয়া হচ্ছে signIn start। 
      console.log("HELLO");
      console.log(formData);
      const res = await fetch("/api/auth/signIn", {
@@ -72,7 +163,7 @@ export const SignIn = () => {
               ...pv,
             ]);
 
-       Dispatch(signInFailure(data.message)); 
+       Dispatch(signInFailure(data.message)); // signInFailure action এ বলে দিচ্ছি কি error আসছে। 
       //  alert("Failed");
        return ;
      }
@@ -91,7 +182,6 @@ export const SignIn = () => {
   };
 
   return (
-
     <AnimatePresence mode="wait">
       <motion.div
         initial={{ y: 40, opacity: 0 }}
@@ -117,12 +207,20 @@ export const SignIn = () => {
               {/* <form onSubmit={handleSubmit}> */}
 
               <div className="flex gap-3  justify-between">
-                <Card href="#" Icon={FaFacebook} />
+                <button onClick={HandleFacebook} className="flex w-full">
 
-                <Card href="#" Icon={FaSquareGithub} />
+                <Card  href="facebook" Icon={FaFacebook} />
+
+                </button>
+
+                <button onClick={HandleGithub} className="flex w-full">
+
+                <Card  href="github" Icon={FaSquareGithub} />
+                </button>
               </div>
-              <button className="flex">
-                <Card href="#" Icon={FaGoogle} />
+
+              <button onClick={HandleGoogle} className="flex">
+                <Card href="google" Icon={FaGoogle} />
               </button>
 
               <div className="divider text-gray-400">OR</div>
@@ -326,18 +424,24 @@ export const SignIn = () => {
 };
 
 const Card = ({ Icon, href }) => {
+  
+  
   return (
-    <a
-      href={href}
-      className="w-full p-2 rounded border-[1px] border-gray-500 relative overflow-hidden group bg-black"
-    >
-      <div className=" absolute  inset-0 bg-gradient-to-r from-white  to-red translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-200" />
+    <>
+      <a
+        href={href}
+        className={`${href === "google" ? "p-2" : "p-2"} w-full rounded border-[1px] relative overflow-hidden group bg-black`}
+      >
+        <div className=" absolute  inset-0 bg-gradient-to-r from-white  to-red translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-200" />
 
-      <Icon className="absolute  z-10 -top-12 -right-12 text-9xl text-black group-hover:text-red-500 group-hover:rotate-12 transition-transform duration-300" />
-      <Icon className="mb-2 text-2xl text-white group-hover:text-black transition-colors relative z-10 duration-300 mx-auto" />
-    </a>
+        <Icon className="absolute  z-10 -top-12 -right-12 text-9xl text-black group-hover:text-red-500 group-hover:rotate-12 transition-transform duration-300" />
+        <Icon className="mb-1 text-2xl text-white group-hover:text-black transition-colors relative z-10 duration-300 mx-auto " />
+      </a>
+    </>
   );
 };
+
+
 
 const DragCloseDrawer = ({ open, setOpen, children }) => {
   const [scope, animate] = useAnimate();

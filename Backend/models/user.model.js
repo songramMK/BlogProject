@@ -1,4 +1,5 @@
 const mongoose = require('mongoose') ; 
+const { HashPasswordGen } = require('../utils/hashPass.utils');
 const userSchema = new mongoose.Schema(
   {
     UserName: {
@@ -8,12 +9,15 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      // required: true,
       unique: true,
     },
     password: {
       type: String,
       required: true,
+      select  : false , 
+      minLength : [6, "Password Atleast 6 character present"] , 
+      maxLength : [16 , "Password at most 16 character present"] , 
     },
     profilePicture: {
       type: String,
@@ -60,7 +64,17 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+userSchema.pre("save" , async function(next){
+  try{
+    if(!this.isModified(this.password)){
+      return next() ; 
+    }
+    this.password = HashPasswordGen(this.password);
+    next() ; 
+  }catch(error){
 
+  }
+})
 const User = mongoose.model("User", userSchema);
 
 module.exports = User; 

@@ -17,89 +17,182 @@ import * as motion from "motion/react-client";
 import { FaRegEye } from "react-icons/fa";
 import { FaEyeSlash } from "react-icons/fa";
 
+import { FaFacebook } from "react-icons/fa";
+import { FaSquareGithub } from "react-icons/fa6";
+import { FaGoogle } from "react-icons/fa";
 
 import { FiCheckSquare, FiX } from "react-icons/fi";
 // import { AnimatePresence, motion } from "framer-motion";
 
-
-
 import { Link, useNavigate } from "react-router";
 import { scale } from "motion";
 
-
-// REDUX FUNCTION IMPORT 
+// REDUX FUNCTION IMPORT
 import { useState, useEffect } from "react";
+import {
+  FacebookAuthProvider,
+  getAuth,
+  GithubAuthProvider,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
+import { app } from "../../firebase";
+import { useDispatch } from "react-redux";
+import { signInSuccess } from "../../redux/feature/user/userSlice";
 export const SignUp = () => {
-  const [notifications, setNotifications] = useState([]);
   const removeNotif = (id) => {
     setNotifications((pv) => pv.filter((n) => n.id !== id));
   };
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-
-  const navigate = useNavigate() ; 
-
-
-  const [formData , setFormData] = useState({}) ; 
+  const [notifications, setNotifications] = useState([]);
+  const [formData, setFormData] = useState({});
   const [Check, setCheck] = useState(false);
+  const [ErrorMessage, SetErrorMessage] = useState("");
 
-  const [ErrorMessage , SetErrorMessage] = useState('') ; 
+  const [showPass, setShowPass] = useState(false);
+  const [reShowPass, setReShowPass] = useState(false);
 
-
-  const [showPass, setShowPass] = useState(false) ; 
-  const [reShowPass , setReShowPass] = useState(false) ; 
-
-  const handleChange = (e)=>{
-    e.preventDefault(); 
-    if (e.target.id === "CheckBox"){
-      setCheck(e.target.checked); 
-      return ; 
+  const handleChange = (e) => {
+    e.preventDefault();
+    if (e.target.id === "CheckBox") {
+      setCheck(e.target.checked);
+      return;
     }
-    const newData = {...formData , [e.target.id] : e.target.value.trim()} ; 
+    const newData = { ...formData, [e.target.id]: e.target.value.trim() };
     setFormData(newData);
-    console.log(e.target.id , e.target.value) ; 
-  }
-  const handleSubmit = async(e)=>{
-    e.preventDefault() ; 
-    if(Check !== true){
+    console.log(e.target.id, e.target.value);
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (Check !== true) {
       SetErrorMessage(
-        "Please agree to the terms and conditions before signing up."
+        "Please agree to the terms and conditions before signing up.",
       );
       setNotifications((pv) => [generateRandomNotif(ErrorMessage), ...pv]);
 
-      return ; 
+      return;
     }
-    if (formData.password !== formData.reTypePassword){
-      SetErrorMessage(
-        "Password Is Not Match...."
-      );
+    if (formData.password !== formData.reTypePassword) {
+      SetErrorMessage("Password Is Not Match....");
       setNotifications((pv) => [generateRandomNotif(ErrorMessage), ...pv]);
-      return ;
+      return;
     }
-      try {
-        const res = await fetch("/api/auth/signUp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            UserName: formData.userName,
-            email: formData.email,
-            password: formData.password,
-          }),
-        });
-        const data = await res.json();
-        if (data.success == false) {
-          SetErrorMessage("SignUp Unsuccessfull.....");
-          setNotifications((pv) => [generateRandomNotif(ErrorMessage), ...pv]);
-        }
-        if (res.ok) {
-          navigate("/signIn");
-        }
-      } catch (error) {
-        SetErrorMessage(`${error.message}`);
+    try {
+      const res = await fetch("/api/auth/signUp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          UserName: formData.userName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+      const data = await res.json();
+      if (data.success == false) {
+        SetErrorMessage("SignUp Unsuccessfull.....");
         setNotifications((pv) => [generateRandomNotif(ErrorMessage), ...pv]);
-        console.log(error);
       }
-    console.log('FormData', formData);
-  }
+      if (res.ok) {
+        navigate("/signIn");
+      }
+    } catch (error) {
+      SetErrorMessage(`${error.message}`);
+      setNotifications((pv) => [generateRandomNotif(ErrorMessage), ...pv]);
+      console.log(error);
+    }
+    console.log("FormData", formData);
+  };
+
+  const auth = getAuth(app);
+
+  const HandleFacebook = async () => {
+    try {
+      const FacbookProvider = new FacebookAuthProvider();
+      const firebaseFacebookResponse = await signInWithPopup(
+        auth,
+        FacbookProvider,
+      );
+
+      console.log("UserName : ", firebaseFacebookResponse.user.displayName , 
+        "email : ", firebaseFacebookResponse.user.email , 
+        "profilePhotoUrl:", firebaseFacebookResponse.user.photoURL,
+
+
+      );
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: firebaseFacebookResponse.user.displayName,
+          email: firebaseFacebookResponse.user.email,
+          profilePhotoUrl: firebaseFacebookResponse.user.photoURL,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch(signInSuccess(data));
+        navigate("/");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    /* 
+email : user.email
+userName : user.displayName
+profileUrl : user.photoURL
+
+
+    */
+    // console.log("Facebook : ", firebaseFacebookResponse);
+    console.log("FACEBOOK ");
+  };
+
+  const HandleGithub = async () => {
+    try {
+      const gitHubProvider = new GithubAuthProvider();
+      const firebaseGithubResponse = await signInWithPopup(
+        auth,
+        gitHubProvider,
+      );
+      navigate("/GithubProfile", {
+        state: {
+          UserName: firebaseGithubResponse.user.reloadUserInfo.screenName,
+          profilePhotoUrl: firebaseGithubResponse.user.photoURL,
+        },
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const HandleGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+    try {
+      const firebaseResponse = await signInWithPopup(auth, provider);
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          displayName: firebaseResponse.user.displayName,
+          email: firebaseResponse.user.email,
+          profilePhotoUrl: firebaseResponse.user.photoURL,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        dispatch(signInSuccess(data));
+        navigate("/");
+      }
+      console.log(firebaseResponse);
+    } catch (error) {
+      console.log(error);
+    }
+    console.log("GOOGLE");
+  };
 
   return (
     <div className="flex flex-col-reverse  bg-black  sm:flex-row lg:flex-row   justify-center items-start pt-10 sm:pt-5 px-1  sm:pr-10">
@@ -234,6 +327,32 @@ export const SignUp = () => {
             </p>
           </div>
 
+          {/* 
+          
+          ------------------------------------
+
+          */}
+
+          <div className="flex gap-3 my-5 justify-between">
+            <button onClick={HandleFacebook} className="flex w-full">
+              <Card href="" Icon={FaFacebook} />
+            </button>
+
+            <button onClick={HandleGithub} className="flex w-full">
+              <Card href="" Icon={FaSquareGithub} />
+            </button>
+          </div>
+
+          <button onClick={HandleGoogle} className="w-full my-5 flex">
+            <Card href="" Icon={FaGoogle} />
+          </button>
+
+          {/* 
+          
+          ------------------------------------
+
+          */}
+
           <button
             type="submit"
             className="btn text-center w-full py-4 bg-red-500 hover:bg-amber-700"
@@ -351,10 +470,7 @@ export const SignUp = () => {
   );
 };
 
-
-
 const NOTIFICATION_TTL = 5000;
-
 
 const Notification = ({ text, id, removeNotif }) => {
   useEffect(() => {
@@ -383,7 +499,20 @@ const Notification = ({ text, id, removeNotif }) => {
   );
 };
 
+const Card = ({ Icon, href }) => {
+  return (
+    <>
+      <a
+        className={`${href === "google" ? "p-2" : "p-2"} w-full rounded border-[1px] border-gray-400 relative overflow-hidden group bg-black`}
+      >
+        <div className=" absolute  inset-0 bg-gradient-to-r from-white  to-red translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-200" />
 
+        <Icon className="absolute  z-10 -top-12 -right-12 text-9xl text-black group-hover:text-red-500 group-hover:rotate-12 transition-transform duration-300" />
+        <Icon className="mb-1 text-2xl text-white group-hover:text-black transition-colors relative z-10 duration-300 mx-auto " />
+      </a>
+    </>
+  );
+};
 
 const generateRandomNotif = (ErrorMessages) => {
   const data = {
@@ -393,6 +522,3 @@ const generateRandomNotif = (ErrorMessages) => {
 
   return data;
 };
-
-
-

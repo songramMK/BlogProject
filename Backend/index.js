@@ -25,6 +25,7 @@ app.use(express.urlencoded({extended: true})) ;
 // ROUTER IMPORT
 app.use('/api/user', UserRouter);
 app.use('/api/auth', authRouter);
+
 app.use((err,req,res,next)=>{
   const StatusCode = err.statusCode || 500; 
   const message = err.message || "INTERNAL SERVER ERROR" ; 
