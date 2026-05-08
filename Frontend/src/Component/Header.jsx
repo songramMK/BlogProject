@@ -8,7 +8,7 @@ import { BlogList } from './BlogList';
 
 export const Header = () => {
   return (
-    <div >
+    <div className='bg-black'>
         <ShuffleHero></ShuffleHero>
         <BlogList></BlogList>
         <Newsletter></Newsletter>

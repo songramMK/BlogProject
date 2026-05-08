@@ -6,6 +6,7 @@ const {
   CompareHashPassword,
 } = require("../utils/hashPass.utils");
 const otpGenerate = require("../utils/otpGenerate.utils.js");
+const response = require("../utils/response.utils.js");
 const {
   getRefreshToken,
   getAccessToken,
@@ -42,12 +43,13 @@ const signUp = async (req, res, next) => {
     const payload = {
       userId: NewUser._id,
       email: NewUser.email,
+      isAdmin : NewUser.isAdmin 
     };
 
     //   RefreshToken যার মেয়াদ বেশি হয়ে থাকে । এবং যা ডাটাবেস এ ও সেইভ থাকে
     const refreshToken = getRefreshToken(payload);
     //   AccessToken যার মেয়াদ RefreshToken এর থেকে কম থাকে । এইটা ডাটাবেস এ সেইভ থাকে না ।
-    const accessToken = getAccessToken({ userId: NewUser._id });
+    const accessToken = getAccessToken({ userId: NewUser._id  , isAdmin : NewUser.isAdmin});
     const cookieOption = getCookiePayload();
 
     await User.findByIdAndUpdate(NewUser._id, {
@@ -70,15 +72,7 @@ const signUp = async (req, res, next) => {
       profilePicture : NewUser.profilePicture 
     };
 
-    return await res
-      //   201 tokhon ই দিবো যখন successfully কোন কিছু create হয় ।
-      .status(201)
-      .json({
-        safeUser,
-        message: "User CREATE SUCESSFULLY",
-        status: true,
-        status_code: 201,
-      });
+      return response(res, 201 , "User Create Successfully", safeUser);
   } catch (error) {
     // next(errorMessage(500, 'Internal Server Error' , false)) amra ekhane eita use korbo na karon
     /*
@@ -114,10 +108,11 @@ const signIn = async (req, res, next) => {
     const Payload = {
       userId: validUser._id,
       email,
+      isAdmin : validUser.isAdmin
     };
 
     const refreshToken = getRefreshToken(Payload);
-    const accessToken = getAccessToken({ userId: validUser._id });
+    const accessToken = getAccessToken({ userId: validUser._id , isAdmin : validUser.isAdmin });
     const createCookie = getCookiePayload();
 
     await User.findByIdAndUpdate(validUser._id, {
@@ -140,11 +135,8 @@ const signIn = async (req, res, next) => {
       profilePicture : validUser.profilePicture,
     };
     // যখন আমি কোনো resource সফলভাবে পেয়ে যাবো বা successfully put/patch হলে বা কোন কিছু successfully delete হলে । মানে কোন অপারেশন  কিছু যখন সফল ভাবে সম্পন্ন হয় ।
-    return res.status(200).json({
-      user: safeUser,
-      message: "SignIn SuccessFully....",
-      status: true,
-    });
+  
+    return response(res, 200 , "SignIn Successfully" , safeUser) ; 
   } catch (error) {
     next(error);
   }
@@ -172,9 +164,8 @@ const sendOTP = async (req, res) => {
     //  res.json({newUser});
     await newUser.save();
     await sendOtpEmail(email, otp);
-    return res
-      .status(200)
-      .json({ message: "OTP SEND SUCCESSFULLY", status: true, newUser });
+ 
+    return response(res, 200 , " OTP SEND SUCCESSFULLY" )
   } catch (error) {
     return res.status(500).json({ message: "INTERNAL SERVER ERROR..." });
   }
@@ -194,6 +185,7 @@ const verfiyOtp = async (req, res) => {
       return res.status(401).json({ message: "INVALID OTP" });
     }
     if (user.otpExpired < Date.now()) {
+
       return res.status(401).json({ message: "OTP EXPIRED... RESEND OTP" });
     }
 
@@ -203,11 +195,9 @@ const verfiyOtp = async (req, res) => {
 
     await user.save();
 
-    return res
-      .status(200)
-      .json({ message: "OTP VERIFIED SUCCESSFULLY... ", status: true });
+    return response(res, 200 , "OTP VERIFIED SUCCESSFULLY" ) ; 
   } catch (error) {
-    return res.status(500).json({ message: "INTERNAL SERVER ERROR" });
+    return response(res, 500 , "INTERNAL SERVER ERROR") ; 
   }
 };
 
@@ -224,17 +214,13 @@ const resetOtp = async (req, res) => {
     if (!UserFind.isOtpVerified) {
       return res.status(401).json({ message: "OTP IS NOT VERIFIED" });
     }
-    const HashPassword = await HashPasswordGen(Newpassword);
-    UserFind.password = HashPassword;
+    // const HashPassword = await HashPasswordGen(Newpassword);
+    UserFind.password = Newpassword;
     UserFind.isOtpVerified = false;
     await UserFind.save();
-    return res
-      .status(200)
-      .json({ message: "RESET PASSWORD SUCCESSFULLY...", status: true });
+    return response(res, 200 , "RESET PASSWORD SUCCESSFULLY" ) ;
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Internal Server Error", status: false });
+    return response(res, 500 , "INTERNAL SERVER ERROR" ) ; 
   }
 };
 
@@ -248,10 +234,14 @@ const google = async (req, res, next) => {
       const Payload = {
         userId: user._id,
         email,
+        isAdmin : validUser.isAdmin 
       };
 
       const refreshToken = getRefreshToken(Payload);
-      const accessToken = getAccessToken({ userId: user._id });
+      const accessToken = getAccessToken({
+        userId: user._id,
+        isAdmin: validUser.isAdmin,
+      });
       const createCookie = getCookiePayload();
 
       await User.findByIdAndUpdate(user._id, {
@@ -273,7 +263,7 @@ const google = async (req, res, next) => {
         isAdmin: user.isAdmin,
         profilePicture: user.profilePicture, 
       };
-      return res.status(200).json({ safeUser });
+      return response(res, 200 , "GOOGLE SIGNIN SUCCESSFULLY" , safeUser) ;
     } else {
       const password =
         // Math.random() মানে আমরা জানি ০-০.৯৯৯৯৯৯৯৯৯৯ পর্যন্ত value আসতে পারে কিন্তু ১ আসবে না
@@ -320,12 +310,13 @@ const google = async (req, res, next) => {
       res.cookie("accessToken", accessToken, createCookie);
 
       const safeUser = {
-        // _id: validUser._id,
+        _id: newUser._id,
         UserName: newUser.UserName,
         email: newUser.email,
         isAdmin: newUser.isAdmin,
+        profilePicture : newUser.profilePicture
       };
-      return res.status(201).json({ safeUser });
+      return response( res,201 , "Google SignUp Successfully" , safeUser) ;
     }
   } catch (error) {
     next(error);
@@ -342,9 +333,13 @@ const github = async (req, res, next) => {
       const payload = {
         userId: ExistUser._id,
         email,
+        isAdmin: validUser.isAdmin,
       };
       const refreshToken = getRefreshToken(Payload);
-      const accessToken = getAccessToken({ userId: ExistUser._id });
+      const accessToken = getAccessToken({
+        userId: ExistUser._id,
+        isAdmin: validUser.isAdmin,
+      });
       const createCookie = getCookiePayload();
 
       await User.findByIdAndUpdate(ExistUser._id, {
@@ -360,16 +355,16 @@ const github = async (req, res, next) => {
       res.cookie("accessToken", accessToken, createCookie);
 
       const safeUser = {
-        // _id: validUser._id,
+        _id: ExistUser._id,
         UserName: ExistUser.UserName,
         email: ExistUser.email,
         isAdmin: ExistUser.isAdmin,
       };
-      return res.status(201).json({ safeUser });
+      return response(res, 200 , "GITHUB SIGNIN SUCCESSFULLY" , safeUser) ;
     } else {
       // আর যদি না থেকে থাকে তাহলে signUp হবে।
 
-      const password = Math.random() * toString(36).slice(-8) 
+      const password = Math.random().toString(36).slice(-8) 
 
       const newUser = await User.create({
         UserName,
@@ -388,7 +383,7 @@ const github = async (req, res, next) => {
         const accessToken = getAccessToken({ userId: newUser._id });
         const createCookie = getCookiePayload();
 
-        await User.findByIdAndUpdate(user._id, {
+        await User.findByIdAndUpdate(newUser._id, {
           $push: {
             refreshToken: {
               token: refreshToken,
@@ -411,7 +406,7 @@ const github = async (req, res, next) => {
 
         SendGeneratePassword(newUser.email, password); 
 
-        return res.status(201).json({ safeUser });
+        return response(res, 201 , " Github SignUp Successfully" ,safeUser )
 
 
     }
@@ -475,6 +470,7 @@ const refreshToken = async (req, res, next) => {
     const payload = {
       userId: user._id,
       email: user.email,
+      isAdmin: validUser.isAdmin,
     };
 
     const createCookie = getCookiePayload();
@@ -504,4 +500,5 @@ module.exports = {
   sendOTP,
   verfiyOtp,
   resetOtp,
+  github
 };

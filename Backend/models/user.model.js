@@ -66,10 +66,10 @@ const userSchema = new mongoose.Schema(
 );
 userSchema.pre("save" , async function(next){
   try{
-    if(!this.isModified(this.password)){
+    if(!this.isModified("password")){
       return next() ; 
     }
-    this.password = HashPasswordGen(this.password);
+    this.password = await HashPasswordGen(this.password);
     next() ; 
   }catch(error){
 

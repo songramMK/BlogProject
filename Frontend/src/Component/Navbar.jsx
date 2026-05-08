@@ -29,7 +29,7 @@ export const Navbar = () => {
   const { currentUser } = useSelector((state) => state.user);
   console.log(currentUser);
   return (
-    <div className="flex justify-between bg-black items-center py-5 px-8 sm:px-20 xl:px-32 ">
+    <div className="flex justify-between border-none bg-black items-center py-5 px-8 sm:px-20 xl:px-32 ">
       <div>
         <img
           onClick={() => navigate("/")}
@@ -60,7 +60,7 @@ export const Navbar = () => {
               initial={wrapperVariants.closed}
               variants={wrapperVariants}
               style={{ originY: "top", translateX: "-50%" }}
-              className="flex flex-col gap-2 p-2 rounded-lg bg-[#FFE0B2] shadow-xl absolute top-[120%] left-[50%] w-48 overflow-hidden"
+              className="flex flex-col gap-2 p-1 rounded-lg bg-[#FFE0B2] shadow-xl absolute top-[120%] left-[50%] w-44 overflow-hidden"
             >
               <Option
                 setOpen={setOpen}
@@ -94,7 +94,7 @@ const Option = ({ text, Icon, setOpen }) => {
     <motion.li
       variants={itemVariants}
       onClick={() => setOpen(false)}
-      className="flex items-center gap-2 w-full p-2 text-xs font-medium whitespace-nowrap rounded-md hover:bg-[#F05252] hover:text-white text-slate-700  transition-colors cursor-pointer"
+      className="flex text-wrap items-center gap-2 w-full p-0 md:p-1 text-xs font-medium whitespace-nowrap rounded-md hover:bg-[#F05252] hover:text-white text-slate-700  transition-colors cursor-pointer"
     >
       <motion.span variants={actionIconVariants}>
         <Icon />

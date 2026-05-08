@@ -12,7 +12,7 @@ import { Navbar } from "./Component/Navbar";
 import { Header } from "./Component/Header";
 import { Newsletter } from "./Component/Newsletter";
 import ShuffleHero from "./Component/ShuffleHero";
-import PrivateRoute from "./pages/PrivateRoute";
+import PrivateRoute from "./pages/AdminPrivateRoute";
 import GithubEmail from "./pages/Authentication/GithubEmail";
 
 function App() {

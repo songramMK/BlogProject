@@ -6,6 +6,8 @@ const cors = require('cors') ;
 const connectDb = require('./config/db');
 const UserRouter = require('./Routers/user.route');
 const authRouter = require('./Routers/auth.route');
+const postRouter = require('./Routers/post.route');
+const commentRouter = require('./Routers/comment.route');
 
 dotenv.config() ; 
 const port  = process.env.PORT || 5000;
@@ -25,6 +27,8 @@ app.use(express.urlencoded({extended: true})) ;
 // ROUTER IMPORT
 app.use('/api/user', UserRouter);
 app.use('/api/auth', authRouter);
+app.use("/api/post", postRouter); 
+app.use('/api/comment' , commentRouter) ; 
 
 app.use((err,req,res,next)=>{
   const StatusCode = err.statusCode || 500; 

@@ -3,6 +3,8 @@ import { useLocation } from 'react-router'
 import DashSidebar from './DashSidebar';
 import DashBoardProfile from './DashBoardProfile';
 import BottomNavBar from './BottomNavBar';
+import DashBoardPost from './DashBoardPost';
+import DashBoardCreatePost from './DashBoardCreatePost';
 export const Dashboard = () => {
   const location = useLocation() ; 
   const [tab, setTab] = useState("") ; 
@@ -16,16 +18,20 @@ export const Dashboard = () => {
   } , [location.search]) ; 
  
   return (
-    <div>
-      <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="min-h-screen flex  sm:flex-row  bg-black">
+      {/* <div className="min-h-screen  flex flex-col md:flex-row"> */}
         {/* Sidebar */}
         <DashSidebar></DashSidebar>
-      </div>
+      {/* </div> */}
 
       {/* <BottomNavBar></BottomNavBar> */}
 
       {/* PROFILE */}
-      <div>{tab === "profile" && <DashBoardProfile></DashBoardProfile>}</div>
+      <div className="flex-1 p-2 w-full bg-black">
+        {tab === "profile" && <DashBoardProfile></DashBoardProfile>}
+        {tab === "createpost" && <DashBoardCreatePost></DashBoardCreatePost>}
+        {tab === "posts" && <DashBoardPost></DashBoardPost>}
+      </div>
     </div>
   );
 }

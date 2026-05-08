@@ -9,10 +9,20 @@ import {
   FiShoppingCart,
   FiTag,
   FiUsers,
+  FiCreditCard,
+  FiBook,
+  FiInbox,
+
 } from "react-icons/fi";
 import { VscSignOut } from "react-icons/vsc";
+import { MdArticle } from "react-icons/md";
+import { FaEdit } from "react-icons/fa";
+
+
 
 import { motion } from "framer-motion";
+import { Link, useNavigate } from "react-router";
+import { useSelector } from "react-redux";
 
 
 
@@ -30,35 +40,39 @@ function DashSidebar() {
 export default DashSidebar;
 
 const Sidebar = () => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
 
+  const {currentUser} = useSelector((state)=> state.user) ; 
 
 
-    useEffect(() => {
-      const handleResize = () => {
-        if (window.innerWidth < 400) {
-          setOpen(false); // small screen
-        } else {
-          setOpen(true); // md and up
-        }
-      };
 
-      handleResize(); // initial run
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 500) {
+        setOpen(false);
+      } else{
+        setOpen(true);
+
+      }
+    };
+    handleResize(); // initial run
+    
       window.addEventListener("resize", handleResize);
 
       return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    const navigate = useNavigate() ; 
   return (
     <motion.nav
       layout
-      className="sticky top-0 h-screen shrink-0 border-r border-slate-300 bg-gray p-2"
+      className="sticky top-0 h-auto md:h-screen w-full md:w-[225px] shrink-0 border-r border-slate-300 bg-gray p-2"
       style={{
         width: open ? "225px" : "fit-content",
       }}
     >
-
       <div className="space-y-1">
         <Option
           Icon={FiHome}
@@ -66,35 +80,44 @@ const Sidebar = () => {
           selected={selected}
           setSelected={setSelected}
           open={open}
+          navigate={navigate}
         />
         <Option
           Icon={FiUsers}
-          title="Profile"
+          title="profile"
           selected={selected}
           setSelected={setSelected}
           open={open}
+          navigate={navigate}
         />
+        {currentUser && currentUser.isAdmin === false && (
+          <Option
+            Icon={FaEdit}
+            title="createpost"
+            selected={selected}
+            setSelected={setSelected}
+            open={open}
+            navigate={navigate}
+          />
+        )}
 
-        <Option
-          Icon={FiShoppingCart}
-          title="Products"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
-        <Option
-          Icon={FiTag}
-          title="Tags"
-          selected={selected}
-          setSelected={setSelected}
-          open={open}
-        />
+        {currentUser && currentUser.isAdmin === false && (
+          <Option
+            Icon={MdArticle}
+            title="posts"
+            selected={selected}
+            setSelected={setSelected}
+            open={open}
+            navigate={navigate}
+          />
+        )}
         <Option
           Icon={FiBarChart}
           title="Analytics"
           selected={selected}
           setSelected={setSelected}
           open={open}
+          navigate={navigate}
         />
         <Option
           Icon={VscSignOut}
@@ -102,6 +125,7 @@ const Sidebar = () => {
           selected={selected}
           setSelected={setSelected}
           open={open}
+          navigate={navigate}
         />
       </div>
 
@@ -110,11 +134,26 @@ const Sidebar = () => {
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
+const Option = ({
+  Icon,
+  title,
+  selected,
+  setSelected,
+  open,
+  notifs,
+  navigate , 
+}) => {
+  const handleOption = (setSelected, title) => {
+    console.log("popo");
+    setSelected(title);
+    console.log(title);
+    navigate(`/dashboard?tab=${title}`) 
+  };
   return (
     <motion.button
       layout
-      onClick={() => setSelected(title)}
+      onClick={() => handleOption(setSelected, title)}
+      // onClick={() => setSelected(title)}
       className={`relative flex h-10 w-full items-center rounded-md transition-colors ${selected === title ? "bg-[#f05252]" : "text-slate-500 hover:bg-[#FFE0B2]"}`}
     >
       <motion.div
@@ -134,7 +173,6 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
           {title}
         </motion.span>
       )}
-
       {notifs && open && (
         <motion.span
           initial={{ scale: 0, opacity: 0 }}
@@ -188,7 +226,7 @@ const ToggleClose = ({ open, setOpen }) => {
     <motion.button
       layout
       onClick={() => setOpen((pv) => !pv)}
-      className={`absolute bottom-0 left-0 right-0 border-t border-slate-300 transition-colors hover:bg-[#F05252]`}
+      className={`absolute bottom-0 left-0 right-0 border-t border-slate-300 transition-colors text-slate-500 hover:text-black  hover:bg-[#F05252]`}
     >
       <div className="flex items-center p-2">
         <motion.div

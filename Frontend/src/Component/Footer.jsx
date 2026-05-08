@@ -5,9 +5,9 @@ import { footer_data } from '../assets/assets';
 
 export const Footer = () => {
   return (
-    <div className="px-6  md:px-16 lg:px-24 xl:px-32 bg-black ">
-      <div className="flex flex-col md:flex-row items-start justify-between gap-10 py-10 border-b border-gray-500/30 text-gray-500">
-        <div>
+    <div className="w-full px-0 sm:px-6  md:px-16 lg:px-24 xl:px-32 bg-black ">
+      <div className="flex bg-black flex-col md:flex-row items-start justify-between gap-10 py-10 border-b border-gray-500/30 text-gray-500">
+        <div className='bg-black'>
           <img src={penAndPaper} className="w-32 sm:w-44 " alt="" />
           <p className="max-w-[410px] text-amber-100 mt-6 ">
             QuickBlog is your modern blogging platform where technology, food,
@@ -16,7 +16,7 @@ export const Footer = () => {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-between w-full md:w-[45%] gap-5 ">
+        <div className="flex bg-black flex-wrap justify-between w-full md:w-[45%] gap-5 ">
           {footer_data.map((section, index) => (
             <div key={index}>
               <h3 className="text-white underline font-semibold text-base text-gray-900 md:mb-5 mb-2 ">
